@@ -15,6 +15,37 @@
     limitations under the License.
 
 -->
+<div class="block-border-one-all"
+    style="	width: 99%;
+	height: 98%;
+	margin: 0px 0px;
+	border: #00FDFF solid 3px;
+	border-radius: 12px;">
+    <div class="block-border-two"
+        style="width: calc(100% - 24px);
+	height: calc(100% - 14px);
+	border: #00FDFF solid 1px;
+	border-radius: 10px;
+	padding: 5px 10px;
+	margin: 1px;
+	font-size: 0.9vw;
+	background: linear-gradient(rgba(0, 16, 169, 0.25), rgba(0, 102, 105, 0.25));">
+        <div class="block-border-top"
+        style="	width: 100%;
+	height: 42px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;">
+            <div class="block-border-label" style="margin-top: 12%">
+                <img
+                        src="http://www.iiucloud.com/admin/img/laber.png">
+                <div style="color:#00FDFF">
+                    告警列表
+                </div>
+            </div>
+        </div>
+        <div style="position:relative;height:90%">
 <div class="tb-absolute-fill tb-alarms-table tb-data-table" layout="column">
     <div ng-show="vm.showData" flex class="tb-absolute-fill" layout="column">
         <md-toolbar class="md-table-toolbar md-default" ng-show="!vm.selectedAlarms.length &&
@@ -98,11 +129,16 @@
         </md-table-container>
         <md-table-pagination ng-if="vm.displayPagination" md-boundary-links md-limit="vm.query.limit" md-limit-options="vm.limitOptions"
                              md-page="vm.query.page" md-total="{{vm.alarmsCount}}"
-                             md-on-paginate="vm.onPaginate" md-page-select="vm.isGtMd">
+                             md-on-paginate="vm.onPaginate" md-page-select="vm.isGtMd"
+                            style="">
         </md-table-pagination>
     </div>
     <span ng-show="!vm.showData"
           layout-align="center center"
           style="text-transform: uppercase; display: flex;"
           class="tb-absolute-fill" translate>alarm.no-data</span>
+</div>
+        </div>
+    </div>
+</div>
 </div>
