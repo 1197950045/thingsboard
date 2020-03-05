@@ -16,15 +16,15 @@
 @import "../../scss/constants";
 
 md-card.tb-login-card {
-  width: 330px !important;
+  //width: 330px !important;
 
   @media (min-width: $layout-breakpoint-sm) {
-    width: 450px !important;
+    //width: 450px !important;
   }
 
   md-card-title {
     img.tb-login-logo {
-      height: 50px;
+      height: 80px;
     }
   }
 

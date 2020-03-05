@@ -63,20 +63,6 @@ export default function LoginRoutes($stateProvider) {
         data: {
             pageTitle: 'login.reset-password'
         }
-    }).state('login.resetExpiredPassword', {
-        url: '/resetExpiredPassword?resetToken',
-        module: 'public',
-        views: {
-            "@": {
-                controller: 'ResetPasswordController',
-                controllerAs: 'vm',
-                templateUrl: resetPasswordTemplate
-            }
-        },
-        data: {
-            expiredPassword: true,
-            pageTitle: 'login.reset-password'
-        }
     }).state('login.createPassword', {
         url: '/createPassword?activateToken',
         module: 'public',

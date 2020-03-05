@@ -27,11 +27,11 @@ const config = require('./webpack.config');
 const express = require('express');
 const http = require('http');
 const httpProxy = require('http-proxy');
-const forwardHost = 'localhost';
-const forwardPort = 8080;
+const forwardHost = '192.168.0.200';
+const forwardPort = 9090;
 
-const ruleNodeUiforwardHost = 'localhost';
-const ruleNodeUiforwardPort = 8080;
+const ruleNodeUiforwardHost = '192.168.0.200';
+const ruleNodeUiforwardPort = 9090;
 
 const app = express();
 const server = http.createServer(app);
