@@ -37,7 +37,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
-@NoSqlDao
 public class CassandraAlarmRecipientDao extends CassandraAbstractModelDao<AlarmRecipientEntity, AlarmRecipient> implements AlarmRecipientDao {
 
     @Override
