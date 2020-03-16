@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@ var ruleNodeClazzHelpLinkMap = {
     'org.thingsboard.rule.engine.mail.TbSendEmailNode': 'ruleNodeSendEmail'
 };
 
-var helpBaseUrl = "https://thingsboard.io";
+var helpBaseUrl = "http://www.iiucloud.com/hlep";
 
 export default angular.module('thingsboard.help', [])
     .constant('helpLinks',
