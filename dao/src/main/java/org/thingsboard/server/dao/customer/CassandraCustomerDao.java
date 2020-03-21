@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.dao.customer;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.Select;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -27,10 +30,7 @@ import org.thingsboard.server.dao.model.nosql.CustomerEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
@@ -51,6 +51,22 @@ public class CassandraCustomerDao extends CassandraAbstractSearchTextDao<Custome
     @Override
     protected String getColumnFamilyName() {
         return ModelConstants.CUSTOMER_COLUMN_FAMILY_NAME;
+    }
+
+    @Override
+    public List<Customer> findCustomersAll() {
+        Select select = select().from(ModelConstants.CUSTOMER_COLUMN_FAMILY_NAME);
+        ResultSet resultSet = executeRead(TenantId.SYS_TENANT_ID, select);
+        List<Customer> customers = new ArrayList<>();
+        for (Row row : resultSet) {
+            Customer customer = new Customer();
+            customer.setId(new CustomerId(row.getUUID("id")));
+            customer.setTenantId(new TenantId(row.getUUID("tenant_id")));
+            customer.setTitle(row.getString("title"));
+            customers.add(customer);
+        }
+
+        return customers;
     }
 
     @Override

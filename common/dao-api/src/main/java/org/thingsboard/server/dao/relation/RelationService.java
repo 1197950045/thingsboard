@@ -25,7 +25,6 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -59,6 +58,12 @@ public interface RelationService {
 
     ListenableFuture<List<EntityRelation>> findByFromAsync(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
 
+    List findCapitalistDevices (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
+
+    List findManufacturerDevice (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
+
+    List<Device>  findLesseeDevices (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
+
     ListenableFuture<List<EntityRelationInfo>> findInfoByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
 
     List<EntityRelation> findByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
@@ -72,12 +77,6 @@ public interface RelationService {
     ListenableFuture<List<EntityRelationInfo>> findInfoByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup);
 
     List<EntityRelation> findByToAndType(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup);
-
-    List<Map<String,List<Device>>> findCapitalistDevices (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
-
-    List<Map<String,List<Device>>> findManufacturerDevice (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
-
-    List<Device>  findLesseeDevices (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<List<EntityRelation>> findByToAndTypeAsync(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup);
 

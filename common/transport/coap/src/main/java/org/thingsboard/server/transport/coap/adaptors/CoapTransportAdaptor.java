@@ -27,6 +27,8 @@ public interface CoapTransportAdaptor {
 
     TransportProtos.PostTelemetryMsg convertToPostTelemetry(UUID sessionId, Request inbound) throws AdaptorException;
 
+    TransportProtos.PostTelemetryMsg convertToPostDevinfo(UUID sessionId, Request inbound) throws AdaptorException;
+
     TransportProtos.PostAttributeMsg convertToPostAttributes(UUID sessionId, Request inbound) throws AdaptorException;
 
     TransportProtos.GetAttributeRequestMsg convertToGetAttributes(UUID sessionId, Request inbound) throws AdaptorException;

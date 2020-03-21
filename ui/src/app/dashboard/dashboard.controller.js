@@ -51,7 +51,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     vm.staticWidgetTypes = [];
     vm.widgetEditMode = $state.$current.data.widgetEditMode;
     vm.iframeMode = $rootScope.iframeMode;
-
+    vm.isCustomerUser = (!vm.user.authority=="CUSTOMER_USER");
     vm.isToolbarOpened = false;
 
     vm.thingsboardVersion = THINGSBOARD_VERSION; //eslint-disable-line
@@ -170,6 +170,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
         }
     }
 
+
     vm.addWidget = addWidget;
     vm.addWidgetFromType = addWidgetFromType;
     vm.exportDashboard = exportDashboard;
@@ -273,6 +274,8 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     });
 
     loadDashboard();
+
+
 
     function loadWidgetLibrary() {
         vm.latestWidgetTypes = [];

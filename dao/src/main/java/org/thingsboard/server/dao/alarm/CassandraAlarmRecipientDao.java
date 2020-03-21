@@ -63,7 +63,6 @@ public class CassandraAlarmRecipientDao extends CassandraAbstractModelDao<AlarmR
         Select select = select().from(getColumnFamilyName()).allowFiltering();
         Select.Where query = select.where();
         query.and(eq(ALARM_RECIPIENT_TENANT_ID_PROPERTY, tenantId.getId()));
-        System.out.println("query="+query);
         return findListByTenantId(tenantId,query);
     }
 

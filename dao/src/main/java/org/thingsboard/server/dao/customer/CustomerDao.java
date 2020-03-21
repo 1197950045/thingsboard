@@ -47,6 +47,13 @@ public interface CustomerDao extends Dao<Customer> {
     List<Customer> findCustomersByTenantId(UUID tenantId, TextPageLink pageLink);
 
     /**
+     * Find all customers
+     *
+     * @return the list of customer objects
+     */
+    List<Customer> findCustomersAll();
+
+    /**
      * Find customers by tenantId and customer title.
      *
      * @param tenantId the tenantId

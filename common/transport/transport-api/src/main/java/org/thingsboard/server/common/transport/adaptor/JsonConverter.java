@@ -46,13 +46,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -72,6 +69,12 @@ public class JsonConverter {
         return builder.build();
     }
 
+    public static PostTelemetryMsg convertToDevinfoProto(JsonElement jsonElement) throws JsonSyntaxException {
+        PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
+        convertToDevinfo(jsonElement, System.currentTimeMillis(), null, builder);
+        return builder.build();
+    }
+
     private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {
         if (jsonElement.isJsonObject()) {
             parseObject(systemTs, result, builder, jsonElement.getAsJsonObject());
@@ -87,12 +90,35 @@ public class JsonConverter {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
         }
     }
+    private static void convertToDevinfo(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {
+        if (jsonElement.isJsonObject()) {
+            devinfoObject(systemTs, result, builder, jsonElement.getAsJsonObject());
+        } else if (jsonElement.isJsonArray()) {
+            jsonElement.getAsJsonArray().forEach(je -> {
+                if (je.isJsonObject()) {
+                    devinfoObject(systemTs, result, builder, je.getAsJsonObject());
+                } else {
+                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
+                }
+            });
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+        }
+    }
 
     private static void parseObject(long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, JsonObject jo) {
         if (result != null) {
             parseObject(result, systemTs, jo);
         } else {
             parseObject(builder, systemTs, jo);
+        }
+    }
+
+    private static void devinfoObject(long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, JsonObject jo) {
+        if (result != null) {
+            devinfoObject(result, systemTs, jo);
+        } else {
+            devinfoObject(builder, systemTs, jo);
         }
     }
 
@@ -160,6 +186,14 @@ public class JsonConverter {
         }
     }
 
+    private static void devinfoObject(PostTelemetryMsg.Builder builder, long systemTs, JsonObject jo) {
+        if (jo.has("ts") && jo.has("values")) {
+            devinfoWithTs(builder, jo);
+        } else {
+            parseWithoutTs(builder, systemTs, jo);
+        }
+    }
+
     private static void parseWithoutTs(PostTelemetryMsg.Builder request, long systemTs, JsonObject jo) {
         TsKvListProto.Builder builder = TsKvListProto.newBuilder();
         builder.setTs(systemTs);
@@ -172,6 +206,21 @@ public class JsonConverter {
         builder.setTs(jo.get("ts").getAsLong());
         builder.addAllKv(parseProtoValues(jo.get("values").getAsJsonObject()));
         request.addTsKvList(builder.build());
+    }
+
+    private static void devinfoWithTs(PostTelemetryMsg.Builder request, JsonObject jo) {
+        try {
+        String strTs = jo.get("ts").getAsString();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = simpleDateFormat.parse(strTs);
+        long ts = date.getTime();
+        TsKvListProto.Builder builder = TsKvListProto.newBuilder();
+        builder.setTs(ts);
+        builder.addAllKv(parseProtoValues(jo.get("values").getAsJsonObject()));
+        request.addTsKvList(builder.build());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 
     private static List<KeyValueProto> parseProtoValues(JsonObject valuesObject) {
@@ -485,6 +534,14 @@ public class JsonConverter {
         }
     }
 
+    private static void devinfoObject(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo) {
+        if (jo.has("ts") && jo.has("values")) {
+            devinfoWithTs(result, jo);
+        } else {
+            parseWithoutTs(result, systemTs, jo);
+        }
+    }
+
     private static void parseWithoutTs(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo) {
         for (KvEntry entry : parseValues(jo)) {
             result.computeIfAbsent(systemTs, tmp -> new ArrayList<>()).add(entry);
@@ -496,6 +553,22 @@ public class JsonConverter {
         JsonObject valuesObject = jo.get("values").getAsJsonObject();
         for (KvEntry entry : parseValues(valuesObject)) {
             result.computeIfAbsent(ts, tmp -> new ArrayList<>()).add(entry);
+        }
+    }
+
+    public static void devinfoWithTs(Map<Long, List<KvEntry>> result, JsonObject jo) {
+        try {
+        String strTs = jo.get("ts").getAsString();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = simpleDateFormat.parse(strTs);
+        long ts = date.getTime();
+        System.out.println("ts "+ts);
+        JsonObject valuesObject = jo.get("values").getAsJsonObject();
+        for (KvEntry entry : parseValues(valuesObject)) {
+            result.computeIfAbsent(ts, tmp -> new ArrayList<>()).add(entry);
+        }
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
     }
 
