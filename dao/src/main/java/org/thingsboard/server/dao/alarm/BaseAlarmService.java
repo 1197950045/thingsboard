@@ -162,7 +162,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         createAlarmRelations(saved);
         Device device = deviceDao.findById(alarm.getTenantId(), alarm.getOriginator().getId());
-        List<AlarmRecipient> alarmRecipients = alarmRecipientDao.findByTelephoneAndSeverity(alarm.getTenantId().getId(), alarm.getOriginator().getId(), device.getCustomerId().getId(), alarm.getSeverity().toString());
+//        List<AlarmRecipient> alarmRecipients = alarmRecipientDao.findByTelephoneAndSeverity(alarm.getTenantId().getId(), alarm.getOriginator().getId(), device.getCustomerId().getId(), alarm.getSeverity().toString());
         /*for (AlarmRecipient alarmRecipient : alarmRecipients) {
             if (alarmRecipient.getStatus()==0){
                 //发送短信

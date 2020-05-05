@@ -50,7 +50,6 @@ public class HttpClientUtil {
 		String result = "";
 
 		try {
-			System.out.println("url="+url);
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("sid", sid);
 			jsonObject.put("token", token);
@@ -65,7 +64,6 @@ public class HttpClientUtil {
 			System.out.println("body = " + body);
 
 			result =postJson(url, body, "UTF-8");
-			System.out.println("result="+result);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

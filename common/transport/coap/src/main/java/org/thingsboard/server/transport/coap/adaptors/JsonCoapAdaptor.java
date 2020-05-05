@@ -52,6 +52,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         }
     }
 
+    //处理coap post数据
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostDevinfo(UUID sessionId, Request inbound) throws AdaptorException {
         String payload = validatePayload(sessionId, inbound, false);

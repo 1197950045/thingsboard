@@ -38,6 +38,7 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.lang.reflect.Field;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -289,13 +290,32 @@ public class CoapTransportResource extends CoapResource {
         }
     }
 
+    //coap获取设备令牌
     private Optional<DeviceTokenCredentials> decodeCredentialsByInfo(Request request) throws AdaptorException {
         String payload = validatePayload(UUID.randomUUID(), request, false);
-        JsonObject jo = new JsonParser().parse(payload).getAsJsonObject();
-        if (jo.has("chipid")) {
-            return Optional.of(new DeviceTokenCredentials(jo.get("chipid").getAsString()));
-        } else {
+        JsonElement je = new JsonParser().parse(payload);
+        if(je.isJsonObject()){
+            JsonObject jo = je.getAsJsonObject();
+            if (jo.has("ccid")) {
+                System.out.println("obj:" + jo.get("ccid").getAsString());
+            return Optional.of(new DeviceTokenCredentials(jo.get("ccid").getAsString()));
+              }
+            else if(jo.has("i")){
+                System.out.println("["+jo.get("t").getAsString()+"] i:" + jo.get("i").getAsString());
+                return Optional.of(new DeviceTokenCredentials(jo.get("i").getAsString()));
+            }
+            else {
             return Optional.empty();
+        }
+        }else {
+            System.out.println("get coap arr"+new Date());
+            JsonObject jeo = je.getAsJsonArray().get(0).getAsJsonObject();
+            if(jeo.has("ccid")) {
+                System.out.println("arr:" + jeo.get("ccid").getAsString());
+                return Optional.of(new DeviceTokenCredentials(jeo.get("ccid").getAsString()));
+            }else {
+                return Optional.empty();
+            }
         }
     }
 

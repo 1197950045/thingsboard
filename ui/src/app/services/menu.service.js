@@ -178,12 +178,12 @@ function Menu(userService, $state, $rootScope) {
                             state: 'home.devices',
                             icon: 'devices_other'
                         },
-                        {
-                            name: 'entity-view.entity-views',
-                            type: 'link',
-                            state: 'home.entityViews',
-                            icon: 'view_quilt'
-                        },
+                        // {
+                        //     name: 'entity-view.entity-views',
+                        //     type: 'link',
+                        //     state: 'home.entityViews',
+                        //     icon: 'view_quilt'
+                        // },
                         {
                             name: 'widget.widget-library',
                             type: 'link',
@@ -244,16 +244,16 @@ function Menu(userService, $state, $rootScope) {
                                     }
                                 ]
                             },
-                            {
-                                name: 'entity-view.management',
-                                places: [
-                                    {
-                                        name: 'entity-view.entity-views',
-                                        icon: 'view_quilt',
-                                        state: 'home.entityViews'
-                                    }
-                                ]
-                            },
+                            // {
+                            //     name: 'entity-view.management',
+                            //     places: [
+                            //         {
+                            //             name: 'entity-view.entity-views',
+                            //             icon: 'view_quilt',
+                            //             state: 'home.entityViews'
+                            //         }
+                            //     ]
+                            // },
                             {
                                 name: 'dashboard.management',
                                 places: [
@@ -300,12 +300,12 @@ function Menu(userService, $state, $rootScope) {
                             state: 'home.devices',
                             icon: 'devices_other'
                         },
-                        {
-                            name: 'entity-view.entity-views',
-                            type: 'link',
-                            state: 'home.entityViews',
-                            icon: 'view_quilt'
-                        },
+                        // {
+                        //     name: 'entity-view.entity-views',
+                        //     type: 'link',
+                        //     state: 'home.entityViews',
+                        //     icon: 'view_quilt'
+                        // },
                         {
                             name: 'dashboard.dashboards',
                             type: 'link',
@@ -334,16 +334,16 @@ function Menu(userService, $state, $rootScope) {
                                 }
                             ]
                         },
-                        {
-                            name: 'entity-view.management',
-                            places: [
-                                {
-                                    name: 'entity-view.entity-views',
-                                    icon: 'view_quilt',
-                                    state: 'home.entityViews'
-                                }
-                            ]
-                        },
+                        // {
+                        //     name: 'entity-view.management',
+                        //     places: [
+                        //         {
+                        //             name: 'entity-view.entity-views',
+                        //             icon: 'view_quilt',
+                        //             state: 'home.entityViews'
+                        //         }
+                        //     ]
+                        // },
                         {
                             name: 'dashboard.view-dashboards',
                             places: [

@@ -44,7 +44,7 @@ function Help($compile, $window, helpLinks) {
             }
         }
 
-        var html = '<md-tooltip md-direction="top">' +
+        var html = '<md-tooltip md-direction="top" ng-show="false">' +
             '{{\'help.goto-help-page\' | translate}}' +
             '</md-tooltip>' +
             '<md-icon class="material-icons">' +
@@ -52,7 +52,7 @@ function Help($compile, $window, helpLinks) {
             '</md-icon>';
 
         var helpButton = angular.element('<md-button class="tb-help-button-style tb-help-button-pos md-icon-button" ' +
-            'ng-click="gotoHelpPage($event)">' +
+            'ng-click="gotoHelpPage($event)" ng-show="false">' +
             html +
             '</md-button>');
 
