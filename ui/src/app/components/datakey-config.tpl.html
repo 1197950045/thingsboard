@@ -16,7 +16,9 @@
 
 -->
 <md-content class="md-padding" layout="column">
-    <md-autocomplete ng-if="model.type !== types.dataKeyType.function"
+    <md-autocomplete ng-if="model.type === types.dataKeyType.timeseries ||
+    						model.type === types.dataKeyType.attribute ||
+    						model.type === types.dataKeyType.alarm"
     	   style="padding-bottom: 8px;"
            ng-required="true"
    		   md-no-cache="true"

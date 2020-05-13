@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
@@ -68,9 +67,9 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.concurrencyLimit = concurrencyLimit;
         this.printQueriesFreq = printQueriesFreq;
         this.queue = new LinkedBlockingDeque<>(queueLimit);
-        this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-dispatcher"));
+        this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads);
         this.callbackExecutor = Executors.newWorkStealingPool(callbackThreads);
-        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-timeout"));
+        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
         this.perTenantLimitsEnabled = perTenantLimitsEnabled;
         this.perTenantLimitsConfiguration = perTenantLimitsConfiguration;
         for (int i = 0; i < dispatcherThreads; i++) {

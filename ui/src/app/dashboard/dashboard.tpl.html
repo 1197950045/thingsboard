@@ -278,8 +278,8 @@
         </tb-details-sidenav>
         <section layout="row" layout-wrap class="tb-footer-buttons md-fab" layout-align="start end">
             <md-fab-speed-dial ng-disabled="$root.loading" ng-show="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
-                               md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up">
-                <md-fab-trigger>
+                               md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up" n>
+                <md-fab-trigger >
                     <md-button ng-disabled="$root.loading"
                                class="tb-btn-footer md-accent md-hue-2 md-fab"
                                aria-label="{{ 'dashboard.add-widget' | translate }}">
@@ -329,8 +329,5 @@
                             options='{"easing": "circ-in-out", "duration": 375, "rotation": "none"}'></ng-md-icon>
             </md-button>
         </section>
-    </section>
-    <section class="tb-powered-by-footer" ng-style="{'color': vm.dashboard.configuration.settings.titleColor}">
-        <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ vm.thingsboardVersion }}</a></span>
     </section>
 </md-content>

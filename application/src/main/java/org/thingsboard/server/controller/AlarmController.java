@@ -44,6 +44,9 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api")
 public class AlarmController extends BaseController {
@@ -168,6 +171,37 @@ public class AlarmController extends BaseController {
         try {
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
             return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/{entityId}/getCustomers", method = RequestMethod.GET)
+    @ResponseBody
+    public List<TimePageData<AlarmInfo>> getCustomersAlarms(
+            @PathVariable("entityId") String strEntityId,
+            @RequestParam(required = false) String searchStatus,
+            @RequestParam(required = false) String status,
+            @RequestParam int limit,
+            @RequestParam String role,
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime,
+            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
+            @RequestParam(required = false) String offset,
+            @RequestParam(required = false) Boolean fetchOriginator
+    ) throws ThingsboardException {
+        EntityId entityId = EntityIdFactory.getByTypeAndId("CUSTOMER", strEntityId);
+        AlarmSearchStatus alarmSearchStatus = StringUtils.isEmpty(searchStatus) ? null : AlarmSearchStatus.valueOf(searchStatus);
+        AlarmStatus alarmStatus = StringUtils.isEmpty(status) ? null : AlarmStatus.valueOf(status);
+        if (alarmSearchStatus != null && alarmStatus != null) {
+            throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
+                    "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        checkEntityId(entityId, Operation.READ);
+        try {
+            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            return checkNotNull(alarmService.findCustomersAlarms(getCurrentUser().getTenantId(), entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator,role));
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -82,8 +82,7 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
-    public Device saveDevice(@RequestBody Device device,
-                             @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
+    public Device saveDevice(@RequestBody Device device) throws ThingsboardException {
         try {
             device.setTenantId(getCurrentUser().getTenantId());
 
@@ -92,7 +91,7 @@ public class DeviceController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation,
                     device.getId(), device);
 
-            Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
+            Device savedDevice = checkNotNull(deviceService.saveDevice(device));
 
             actorService
                     .onDeviceNameOrTypeUpdate(

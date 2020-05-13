@@ -21,8 +21,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -42,9 +40,6 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ACK_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CLEAR_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COLUMN_FAMILY_NAME;
@@ -52,7 +47,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_END_TS_PROPE
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_RELATION_TYPES;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_SEVERITY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_START_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_STATUS_PROPERTY;
@@ -105,9 +99,6 @@ public final class AlarmEntity extends BaseSqlEntity<Alarm> implements BaseEntit
     @Column(name = ALARM_PROPAGATE_PROPERTY)
     private Boolean propagate;
 
-    @Column(name = ALARM_PROPAGATE_RELATION_TYPES)
-    private String propagateRelationTypes;
-
     public AlarmEntity() {
         super();
     }
@@ -131,11 +122,6 @@ public final class AlarmEntity extends BaseSqlEntity<Alarm> implements BaseEntit
         this.ackTs = alarm.getAckTs();
         this.clearTs = alarm.getClearTs();
         this.details = alarm.getDetails();
-        if (!CollectionUtils.isEmpty(alarm.getPropagateRelationTypes())) {
-            this.propagateRelationTypes = String.join(",", alarm.getPropagateRelationTypes());
-        } else {
-            this.propagateRelationTypes = null;
-        }
     }
 
     @Override
@@ -155,11 +141,6 @@ public final class AlarmEntity extends BaseSqlEntity<Alarm> implements BaseEntit
         alarm.setAckTs(ackTs);
         alarm.setClearTs(clearTs);
         alarm.setDetails(details);
-        if(!StringUtils.isEmpty(propagateRelationTypes)) {
-            alarm.setPropagateRelationTypes(Arrays.asList(propagateRelationTypes.split(",")));
-        } else {
-            alarm.setPropagateRelationTypes(Collections.emptyList());
-        }
         return alarm;
     }
 

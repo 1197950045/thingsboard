@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt.adaptors;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -65,10 +66,22 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
+    //解析繁易网关
+    @Override
+    public TransportProtos.PostTelemetryMsg convertToFyPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
+        try {
+            return JsonConverter.convertToFyTelemetryProto(JSONObject.parseObject(payload));
+        } catch (IllegalStateException | JsonSyntaxException ex) {
+            throw new AdaptorException(ex);
+        }
+    }
+
     @Override
     public TransportProtos.PostAttributeMsg convertToPostAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
         try {
+            System.out.println(payload);
             return JsonConverter.convertToAttributesProto(new JsonParser().parse(payload));
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);

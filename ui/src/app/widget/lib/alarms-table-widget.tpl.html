@@ -15,6 +15,37 @@
     limitations under the License.
 
 -->
+<div class="block-border-one-all"
+    style="	width: calc(100% - 40px);
+ height: calc(100% - 40px);
+ margin: 20px;
+ border: #00FDFF solid 3px;
+ border-radius: 12px;">
+    <div class="block-border-two"
+        style="width: calc(100% - 24px);
+	height: calc(100% - 14px);
+	border: #00FDFF solid 1px;
+	border-radius: 10px;
+	padding: 5px 10px;
+	margin: 1px;
+	font-size: 0.9vw;
+	background: linear-gradient(rgba(0, 16, 169, 0.1), rgba(0, 102, 105, 0.1));">
+        <div class="block-border-top"
+        style="	width: 100%;
+	height: 42px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;">
+            <div class="block-border-label" style="">
+                <img
+                        src="http://www.iiucloud.com/admin/img/laber.png">
+                <div>
+                    告警列表
+                </div>
+            </div>
+        </div>
+        <div style="position:relative;height:90%">
 <div class="tb-absolute-fill tb-alarms-table tb-data-table" layout="column">
     <div ng-show="vm.showData" flex class="tb-absolute-fill" layout="column">
         <md-toolbar class="md-table-toolbar md-default" ng-show="!vm.selectedAlarms.length &&
@@ -60,16 +91,16 @@
         </md-toolbar>
         <md-table-container flex>
             <table md-table md-row-select="vm.enableSelection" multiple="" ng-model="vm.selectedAlarms">
-                <thead fix-head md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
+                <thead fix-head md-head md-order="vm.query.order" md-on-reorder="vm.onReorder" >
                 <tr md-row>
-                    <th ng-if="key.display" md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.alarmSource.dataKeys"><span>{{ key.title }}</span></th>
+                    <th ng-if="key.display" md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.alarmSource.dataKeys" style="color: white"><span>{{ key.title }}</span></th>
                     <th md-column class="tb-action-cell" layout="row" layout-align="end center"></th>
                 </tr>
                 </thead>
                 <tbody md-body>
                 <tr ng-show="vm.alarms.length" md-row md-select="alarm"
                     md-select-id="id.id" md-auto-select="false" ng-repeat="alarm in vm.alarms"
-                    ng-click="vm.onRowClick($event, alarm)" ng-class="{'tb-current': vm.isCurrent(alarm)}">
+                    ng-click="vm.onRowClick($event, alarm)" ng-class-even="{'tb-current': vm.isCurrent(alarm),even:true}" ng-class-odd="{'tb-current': vm.isCurrent(alarm),old:true}" >
                     <td ng-if="key.display" md-cell flex ng-repeat="key in vm.alarmSource.dataKeys"
                         ng-style="vm.cellStyle(alarm, key)"
                         ng-bind-html="vm.cellContent(alarm, key)">
@@ -98,11 +129,16 @@
         </md-table-container>
         <md-table-pagination ng-if="vm.displayPagination" md-boundary-links md-limit="vm.query.limit" md-limit-options="vm.limitOptions"
                              md-page="vm.query.page" md-total="{{vm.alarmsCount}}"
-                             md-on-paginate="vm.onPaginate" md-page-select="vm.isGtMd">
+                             md-on-paginate="vm.onPaginate" md-page-select="vm.isGtMd"
+                            style="">
         </md-table-pagination>
     </div>
     <span ng-show="!vm.showData"
           layout-align="center center"
           style="text-transform: uppercase; display: flex;"
           class="tb-absolute-fill" translate>alarm.no-data</span>
+</div>
+        </div>
+    </div>
+</div>
 </div>

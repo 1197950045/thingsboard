@@ -41,7 +41,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
@@ -115,7 +114,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         Assert.notNull(zkConnectionTimeout, MiscUtils.missingProperty("zk.connection_timeout_ms"));
         Assert.notNull(zkSessionTimeout, MiscUtils.missingProperty("zk.session_timeout_ms"));
 
-        reconnectExecutorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("zk-discovery"));
+        reconnectExecutorService = Executors.newSingleThreadExecutor();
 
         log.info("Initializing discovery service using ZK connect string: {}", zkUrl);
 

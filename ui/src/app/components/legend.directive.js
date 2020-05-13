@@ -46,9 +46,7 @@ function Legend($compile, $templateCache, types) {
         scope.isRowDirection = scope.legendConfig.direction === types.direction.row.value;
 
         scope.toggleHideData = function(index) {
-            if (!scope.legendData.keys[index].dataKey.settings.disableDataHiding) {
-                scope.legendData.keys[index].dataKey.hidden = !scope.legendData.keys[index].dataKey.hidden;
-            }
+            scope.legendData.keys[index].dataKey.hidden = !scope.legendData.keys[index].dataKey.hidden;
         }
 
         $compile(element.contents())(scope);

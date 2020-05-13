@@ -46,6 +46,11 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
     private CustomerRepository customerRepository;
 
     @Override
+    public List<Customer> findCustomersAll(){
+        return null;
+    }
+
+    @Override
     protected Class<CustomerEntity> getEntityClass() {
         return CustomerEntity.class;
     }

@@ -27,13 +27,11 @@ const config = require('config'),
 
 const scriptBodyTraceFrequency = Number(config.get('script.script_body_trace_frequency'));
 const useSandbox = config.get('script.use_sandbox') === 'true';
-const maxActiveScripts = Number(config.get('script.max_active_scripts'));
 
 function JsInvokeMessageProcessor(producer) {
     this.producer = producer;
     this.executor = new JsExecutor(useSandbox);
     this.scriptMap = {};
-    this.scriptIds = [];
     this.executedScriptsCounter = 0;
 }
 
@@ -72,7 +70,7 @@ JsInvokeMessageProcessor.prototype.processCompileRequest = function(requestId, r
 
     this.executor.compileScript(compileRequest.scriptBody).then(
         (script) => {
-            this.cacheScript(scriptId, script);
+            this.scriptMap[scriptId] = script;
             var compileResponse = createCompileResponse(scriptId, true);
             logger.debug('[%s] Sending success compile response, scriptId: [%s]', requestId, scriptId);
             this.sendResponse(requestId, responseTopic, scriptId, compileResponse);
@@ -128,10 +126,6 @@ JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, r
     var scriptId = getScriptId(releaseRequest);
     logger.debug('[%s] Processing release request, scriptId: [%s]', requestId, scriptId);
     if (this.scriptMap[scriptId]) {
-        var index = this.scriptIds.indexOf(scriptId);
-        if (index > -1) {
-            this.scriptIds.splice(index, 1);
-        }
         delete this.scriptMap[scriptId];
     }
     var releaseResponse = createReleaseResponse(scriptId, true);
@@ -171,7 +165,7 @@ JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scrip
         } else {
             self.executor.compileScript(scriptBody).then(
                 (script) => {
-                    self.cacheScript(scriptId, script);
+                    self.scriptMap[scriptId] = script;
                     resolve(script);
                 },
                 (err) => {
@@ -180,19 +174,6 @@ JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scrip
             );
         }
     });
-}
-
-JsInvokeMessageProcessor.prototype.cacheScript = function(scriptId, script) {
-    if (!this.scriptMap[scriptId]) {
-        this.scriptIds.push(scriptId);
-        while (this.scriptIds.length > maxActiveScripts) {
-            logger.info('Active scripts count [%s] exceeds maximum limit [%s]', this.scriptIds.length, maxActiveScripts);
-            const prevScriptId = this.scriptIds.shift();
-            logger.info('Removing active script with id [%s]', prevScriptId);
-            delete this.scriptMap[prevScriptId];
-        }
-    }
-    this.scriptMap[scriptId] = script;
 }
 
 function createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse) {

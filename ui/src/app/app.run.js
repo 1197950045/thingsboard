@@ -41,7 +41,7 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
     }
 
     initWatchers();
-    
+
     function initWatchers() {
         $rootScope.unauthenticatedHandle = $rootScope.$on('unauthenticated', function (event, doLogout) {
             if (doLogout) {
@@ -137,7 +137,20 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
             }
         })
 
-        $rootScope.pageTitle = 'ThingsBoard';
+        var locationSearchName = $location.search().NM;
+        var locationLastingName;
+        var cityJson = { "NT":"南通","ZJG":"张家港" };
+        if(cityJson[locationSearchName]){
+            locationLastingName=cityJson[locationSearchName];
+        }else if(!locationSearchName){
+            locationLastingName = '';
+        }else{
+            locationLastingName = locationSearchName;
+        }
+
+        $rootScope.pageTitle = locationLastingName + '工业设备云平台';
+
+        $rootScope.cityName = $rootScope.pageTitle;
 
         $rootScope.stateChangeSuccessHandle = $rootScope.$on('$stateChangeSuccess', function (evt, to, params) {
             if (userService.isPublic() && to.name === 'dashboard') {
@@ -146,9 +159,9 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
             }
             if (angular.isDefined(to.data.pageTitle)) {
                 $translate(to.data.pageTitle).then(function (translation) {
-                    $rootScope.pageTitle = 'ThingsBoard | ' + translation;
+                    $rootScope.pageTitle = translation + ' | ' + locationLastingName + '工业设备云平台';
                 }, function (translationId) {
-                    $rootScope.pageTitle = 'ThingsBoard | ' + translationId;
+                    $rootScope.pageTitle = translationId + ' | ' + locationLastingName + '工业设备云平台';
                 });
             }
         })
@@ -162,12 +175,14 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
         if (forbiddenDialog === null) {
             $translate(['access.access-forbidden',
                 'access.access-forbidden-text',
+                'access.access-forbidden',
                 'action.cancel',
                 'action.sign-in']).then(function (translations) {
                 if (forbiddenDialog === null) {
                     forbiddenDialog = $mdDialog.confirm()
                         .title(translations['access.access-forbidden'])
                         .htmlContent(translations['access.access-forbidden-text'])
+                        .ariaLabel(translations['access.access-forbidden'])
                         .cancel(translations['action.cancel'])
                         .ok(translations['action.sign-in']);
                     $mdDialog.show(forbiddenDialog).then(function () {

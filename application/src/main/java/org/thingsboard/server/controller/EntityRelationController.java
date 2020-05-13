@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -224,6 +226,54 @@ public class EntityRelationController extends BaseController {
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
             return checkNotNull(relationService.findByTo(getTenantId(), entityId, typeGroup));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    //资本方设备
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/getCapitalistDevice", method = RequestMethod.GET, params = {FROM_ID})
+    @ResponseBody
+    public List<Map<String,List<Device>>> findCapitalistDevice(@RequestParam(FROM_ID) String strFromId) throws ThingsboardException {
+        checkParameter(FROM_ID, strFromId);
+        EntityId entityId = EntityIdFactory.getByTypeAndId("CUSTOMER", strFromId);
+        checkEntityId(entityId, Operation.READ);
+        RelationTypeGroup typeGroup = parseRelationTypeGroup("COMMON", RelationTypeGroup.COMMON);
+        try {
+            return checkNotNull(relationService.findCapitalistDevices(getTenantId(), entityId, "Contains", typeGroup));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    //设备厂商设备
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/getManufacturerDevice", method = RequestMethod.GET, params = {FROM_ID})
+    @ResponseBody
+    public List<Map<String,List<Device>>> findManufacturerDevice(@RequestParam(FROM_ID) String strFromId) throws ThingsboardException {
+        checkParameter(FROM_ID, strFromId);
+        EntityId entityId = EntityIdFactory.getByTypeAndId("CUSTOMER", strFromId);
+        checkEntityId(entityId, Operation.READ);
+        RelationTypeGroup typeGroup = parseRelationTypeGroup("COMMON", RelationTypeGroup.COMMON);
+        try {
+            return checkNotNull(relationService.findManufacturerDevice(getTenantId(), entityId, "Contains", typeGroup));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    //租赁方设备
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/getLesseeDevice", method = RequestMethod.GET, params = {FROM_ID})
+    @ResponseBody
+    public List<Device> getLesseeDevice(@RequestParam(FROM_ID) String strFromId) throws ThingsboardException {
+        checkParameter(FROM_ID, strFromId);
+        EntityId entityId = EntityIdFactory.getByTypeAndId("CUSTOMER", strFromId);
+        checkEntityId(entityId, Operation.READ);
+        RelationTypeGroup typeGroup = parseRelationTypeGroup("COMMON", RelationTypeGroup.COMMON);
+        try {
+            return checkNotNull(relationService.findLesseeDevices(getTenantId(), entityId, "Contains", typeGroup));
         } catch (Exception e) {
             throw handleException(e);
         }

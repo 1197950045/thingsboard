@@ -152,8 +152,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
             var entityInfo = getActiveEntityInfo();
             var entityId = entityInfo ? entityInfo.entityId : null;
             var entityName = entityInfo ? entityInfo.entityName : null;
-            var entityLabel = entityInfo && entityInfo.label ? entityInfo.label : null;
-            handleWidgetAction($event, this.descriptor, entityId, entityName, null, entityLabel);
+            handleWidgetAction($event, this.descriptor, entityId, entityName);
         }
         widgetContext.customHeaderActions.push(headerAction);
     }
@@ -368,10 +367,6 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                     widget.config.alarmSearchStatus : types.alarmSearchStatus.any;
                 options.alarmsPollingInterval = angular.isDefined(widget.config.alarmsPollingInterval) ?
                     widget.config.alarmsPollingInterval * 1000 : 5000;
-                options.alarmsMaxCountLoad = angular.isDefined(widget.config.alarmsMaxCountLoad) ?
-                    widget.config.alarmsMaxCountLoad : 0;
-                options.alarmsFetchSize = angular.isDefined(widget.config.alarmsFetchSize) ?
-                    widget.config.alarmsFetchSize : 100;
             } else {
                 options.datasources = angular.copy(widget.config.datasources)
             }
@@ -459,15 +454,14 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                         var entityInfo = getActiveEntityInfo();
                         var entityId = entityInfo ? entityInfo.entityId : null;
                         var entityName = entityInfo ? entityInfo.entityName : null;
-                        var entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
-                        handleWidgetAction(event, descriptors[i], entityId, entityName, null, entityLabel);
+                        handleWidgetAction(event, descriptors[i], entityId, entityName);
                     }
                 }
             }
         }
     }
 
-    function updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel) {
+    function updateEntityParams(params, targetEntityParamName, targetEntityId, entityName) {
         if (targetEntityId) {
             var targetEntityParams;
             if (targetEntityParamName && targetEntityParamName.length) {
@@ -484,13 +478,10 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
             if (entityName) {
                 targetEntityParams.entityName = entityName;
             }
-            if (entityLabel) {
-                targetEntityParams.entityLabel = entityLabel;
-            }
         }
     }
 
-    function handleWidgetAction($event, descriptor, entityId, entityName, additionalParams, entityLabel) {
+    function handleWidgetAction($event, descriptor, entityId, entityName, additionalParams) {
         var type = descriptor.type;
         var targetEntityParamName = descriptor.stateEntityParamName;
         var targetEntityId;
@@ -505,7 +496,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 if (!params) {
                     params = {};
                 }
-                updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+                updateEntityParams(params, targetEntityParamName, targetEntityId, entityName);
                 if (type == types.widgetActionTypes.openDashboardState.value) {
                     widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
                 } else {
@@ -517,7 +508,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 targetDashboardStateId = descriptor.targetDashboardStateId;
                 var stateObject = {};
                 stateObject.params = {};
-                updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+                updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName);
                 if (targetDashboardStateId) {
                     stateObject.id = targetDashboardStateId;
                 }

@@ -28,6 +28,35 @@
   }
 }
 
+.old {
+  background-color: rgba(255, 255, 255, 0);
+}
+
+.even {
+  background-color: #107e9efa;
+}
+
+.block-border-label {
+  width: 220px;
+  height: 42px;
+  margin-top: 45px;
+}
+
+.block-border-label img {
+  width: 210px;
+  height: 12px;
+  margin-top: -5px;
+}
+
+.block-border-label div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -35px;
+  font-weight: 400;
+  color: #fff;
+}
+
 .tb-alarms-table {
   md-toolbar {
     min-height: 39px;
@@ -63,6 +92,7 @@
           }
         }
       }
+
 
       tbody {
         tr {

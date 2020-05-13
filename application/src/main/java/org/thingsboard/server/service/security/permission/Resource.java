@@ -22,6 +22,7 @@ import java.util.Optional;
 public enum Resource {
     ADMIN_SETTINGS(),
     ALARM(EntityType.ALARM),
+    ALARM_RECIPIENT(EntityType.ALARM_RECIPIENT),
     DEVICE(EntityType.DEVICE),
     ASSET(EntityType.ASSET),
     CUSTOMER(EntityType.CUSTOMER),

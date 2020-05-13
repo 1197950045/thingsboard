@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.transport.coap;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
@@ -35,6 +38,7 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.lang.reflect.Field;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +53,7 @@ public class CoapTransportResource extends CoapResource {
     private static final int ACCESS_TOKEN_POSITION = 3;
     private static final int FEATURE_TYPE_POSITION = 4;
     private static final int REQUEST_ID_POSITION = 5;
+    private static final int DEVINFO_POSITION = 3;
 
     private final CoapTransportContext transportContext;
     private final TransportService transportService;
@@ -79,16 +84,24 @@ public class CoapTransportResource extends CoapResource {
             log.trace("Can't fetch/subscribe to timeseries updates");
             exchange.respond(ResponseCode.BAD_REQUEST);
         } else if (exchange.getRequestOptions().hasObserve()) {
-            processExchangeGetRequest(exchange, featureType.get());
+            try {
+                processExchangeGetRequest(exchange, featureType.get());
+            } catch (AdaptorException e) {
+                e.printStackTrace();
+            }
         } else if (featureType.get() == FeatureType.ATTRIBUTES) {
-            processRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
+            try {
+                processRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
+            } catch (AdaptorException e) {
+                e.printStackTrace();
+            }
         } else {
             log.trace("Invalid feature type parameter");
             exchange.respond(ResponseCode.BAD_REQUEST);
         }
     }
 
-    private void processExchangeGetRequest(CoapExchange exchange, FeatureType featureType) {
+    private void processExchangeGetRequest(CoapExchange exchange, FeatureType featureType) throws AdaptorException {
         boolean unsubscribe = exchange.getRequestOptions().getObserve() == 1;
         SessionMsgType sessionMsgType;
         if (featureType == FeatureType.RPC) {
@@ -106,9 +119,10 @@ public class CoapTransportResource extends CoapResource {
             log.trace("Missing feature type parameter");
             exchange.respond(ResponseCode.BAD_REQUEST);
         } else {
+            try {
             switch (featureType.get()) {
                 case ATTRIBUTES:
-                    processRequest(exchange, SessionMsgType.POST_ATTRIBUTES_REQUEST);
+                        processRequest(exchange, SessionMsgType.POST_ATTRIBUTES_REQUEST);
                     break;
                 case TELEMETRY:
                     processRequest(exchange, SessionMsgType.POST_TELEMETRY_REQUEST);
@@ -124,17 +138,38 @@ public class CoapTransportResource extends CoapResource {
                 case CLAIM:
                     processRequest(exchange, SessionMsgType.CLAIM_REQUEST);
                     break;
+                case DEVINFO:
+                    processRequest(exchange, SessionMsgType.POST_DEVINFO_REQUEST);
+                    break;
+            }
+            } catch (AdaptorException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    private void processRequest(CoapExchange exchange, SessionMsgType type) {
+    private String validatePayload(UUID sessionId, Request inbound, boolean isEmptyPayloadAllowed) throws AdaptorException {
+        String payload = inbound.getPayloadString();
+        if (payload == null) {
+            log.warn("[{}] Payload is empty!", sessionId);
+            if (!isEmptyPayloadAllowed) {
+                throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
+            }
+        }
+        return payload;
+    }
+
+    private void processRequest(CoapExchange exchange, SessionMsgType type) throws AdaptorException {
         log.trace("Processing {}", exchange.advanced().getRequest());
         exchange.accept();
         Exchange advanced = exchange.advanced();
         Request request = advanced.getRequest();
-
-        Optional<DeviceTokenCredentials> credentials = decodeCredentials(request);
+        Optional<DeviceTokenCredentials> credentials;
+        if (type.equals(SessionMsgType.POST_DEVINFO_REQUEST)){
+            credentials = decodeCredentialsByInfo(request);
+        }else {
+            credentials = decodeCredentials(request);
+        }
         if (!credentials.isPresent()) {
             exchange.respond(ResponseCode.BAD_REQUEST);
             return;
@@ -210,6 +245,11 @@ public class CoapTransportResource extends CoapResource {
                                         transportContext.getAdaptor().convertToGetAttributes(sessionId, request),
                                         new CoapNoOpCallback(exchange));
                                 break;
+                            case POST_DEVINFO_REQUEST:
+                                transportService.process(sessionInfo,
+                                        transportContext.getAdaptor().convertToPostDevinfo(sessionId, request),
+                                        new CoapOkCallback(exchange));
+                                break;
                         }
                     } catch (AdaptorException e) {
                         log.trace("[{}] Failed to decode message: ", sessionId, e);
@@ -250,10 +290,41 @@ public class CoapTransportResource extends CoapResource {
         }
     }
 
+    //coap获取设备令牌
+    private Optional<DeviceTokenCredentials> decodeCredentialsByInfo(Request request) throws AdaptorException {
+        String payload = validatePayload(UUID.randomUUID(), request, false);
+        JsonElement je = new JsonParser().parse(payload);
+        if(je.isJsonObject()){
+            JsonObject jo = je.getAsJsonObject();
+            if (jo.has("ccid")) {
+                System.out.println("obj:" + jo.get("ccid").getAsString());
+            return Optional.of(new DeviceTokenCredentials(jo.get("ccid").getAsString()));
+              }
+            else if(jo.has("i")){
+                System.out.println("["+jo.get("t").getAsString()+"] i:" + jo.get("i").getAsString());
+                return Optional.of(new DeviceTokenCredentials(jo.get("i").getAsString()));
+            }
+            else {
+            return Optional.empty();
+        }
+        }else {
+            System.out.println("get coap arr"+new Date());
+            JsonObject jeo = je.getAsJsonArray().get(0).getAsJsonObject();
+            if(jeo.has("ccid")) {
+                System.out.println("arr:" + jeo.get("ccid").getAsString());
+                return Optional.of(new DeviceTokenCredentials(jeo.get("ccid").getAsString()));
+            }else {
+                return Optional.empty();
+            }
+        }
+    }
+
     private Optional<FeatureType> getFeatureType(Request request) {
         List<String> uriPath = request.getOptions().getUriPath();
         try {
-            if (uriPath.size() >= FEATURE_TYPE_POSITION) {
+            if (uriPath.size() >= DEVINFO_POSITION && uriPath.get(DEVINFO_POSITION-1).toUpperCase().equals("DEVINFO")){
+                return Optional.of(FeatureType.valueOf(uriPath.get(DEVINFO_POSITION-1).toUpperCase()));
+            }else  if (uriPath.size() >= FEATURE_TYPE_POSITION) {
                 return Optional.of(FeatureType.valueOf(uriPath.get(FEATURE_TYPE_POSITION - 1).toUpperCase()));
             }
         } catch (RuntimeException e) {

@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function ResetPasswordRequestController($translate, toast, loginService) {
+export default function ResetPasswordRequestController($translate, toast, loginService, $window, $scope) {
     var vm = this;
 
     vm.email = '';
 
+    vm.resetPasswordRequestLoad = resetPasswordRequestLoad();
+
     vm.sendResetPasswordLink = sendResetPasswordLink;
+
+    function resetPasswordRequestLoad() {
+        if($window.innerWidth<768){
+            $scope.mobileMdCard={
+                "height":"100%",
+                "margin":"0"
+            }
+        }
+    }
 
     function sendResetPasswordLink() {
         loginService.sendResetPasswordLink(vm.email).then(function success() {

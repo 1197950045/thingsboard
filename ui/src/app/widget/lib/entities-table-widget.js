@@ -311,13 +311,13 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         var actionSourceId = isDouble ? 'rowDoubleClick' : 'rowClick';
         var descriptors = vm.ctx.actionsApi.getActionDescriptors(actionSourceId);
         if (descriptors.length) {
-            var entityId, entityName, entityLabel;
+            var entityId;
+            var entityName;
             if (vm.currentEntity) {
                 entityId = vm.currentEntity.id;
                 entityName = vm.currentEntity.entityName;
-                entityLabel = vm.currentEntity.entityLabel;
             }
-            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
+            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
         }
     }
 
@@ -325,13 +325,13 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         if ($event) {
             $event.stopPropagation();
         }
-        var entityId, entityName, entityLabel;
+        var entityId;
+        var entityName;
         if (entity) {
             entityId = entity.id;
             entityName = entity.entityName;
-            entityLabel = entity.entityLabel;
         }
-        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, null, entityLabel);
+        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName);
     }
 
     function isCurrent(entity) {

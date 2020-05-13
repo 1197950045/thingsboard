@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.nosql;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
@@ -27,6 +28,10 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.alarm.AlarmRecipient;
+import org.thingsboard.server.common.data.alarm.AlarmRecipientId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
@@ -35,6 +40,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.wrapper.EntityResultSet;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -123,6 +129,68 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
             });
         }
         return Futures.immediateFuture(null);
+    }
+
+    protected List<AlarmRecipient> findListByTenantId(TenantId tenantId, Statement statement) {
+        List<AlarmRecipient> list = Collections.emptyList();
+        if (statement != null) {
+            statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+            ResultSet resultSet = executeRead(tenantId, statement);
+            System.out.println("resultSet=" + resultSet);
+            List<AlarmRecipient> entities = new ArrayList<>();
+            for (Row row : resultSet) {
+                AlarmRecipient alarmRecipient = new AlarmRecipient();
+                alarmRecipient.setId(new AlarmRecipientId(row.getUUID("id")));
+                alarmRecipient.setTenantId(new TenantId(row.getUUID("tenant_id")));
+                alarmRecipient.setCustomerId(new CustomerId(row.getUUID("customer_id")));
+                alarmRecipient.setDeviceId(new DeviceId(row.getUUID("device_id")));
+                alarmRecipient.setType(row.getString("type"));
+                alarmRecipient.setName(row.getString("name"));
+                alarmRecipient.setTelephone(row.getString("telephone"));
+                alarmRecipient.setSeverity(row.getString("severity"));
+                alarmRecipient.setEmail(row.getString("email"));
+                alarmRecipient.setStatus(row.getInt("status"));
+                entities.add(alarmRecipient);
+            }
+
+            if (entities != null) {
+                System.out.println("result not null");
+                for (AlarmRecipient entity : entities) {
+                    System.out.println("entity="+entity);
+                }
+                return entities;
+            } else {
+                System.out.println("i am findListByStatementAsyncq5");
+                return Collections.emptyList();
+            }
+        }
+        return list;
+    }
+
+    protected AlarmRecipient findByTenantId(TenantId tenantId, Statement statement) {
+        if (statement != null) {
+            statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+            ResultSet resultSet = executeRead(tenantId, statement);
+            System.out.println("resultSet=" + resultSet);
+            AlarmRecipient alarmRecipient = new AlarmRecipient();
+            for (Row row : resultSet) {
+                alarmRecipient.setTenantId(new TenantId(row.getUUID("tenant_id")));
+                alarmRecipient.setCustomerId(new CustomerId(row.getUUID("customer_id")));
+                alarmRecipient.setDeviceId(new DeviceId(row.getUUID("device_id")));
+                alarmRecipient.setType(row.getString("type"));
+                alarmRecipient.setName(row.getString("name"));
+                alarmRecipient.setTelephone(row.getString("telephone"));
+                alarmRecipient.setSeverity(row.getString("severity"));
+                alarmRecipient.setEmail(row.getString("email"));
+                alarmRecipient.setStatus(row.getInt("status"));
+            }
+
+            if (alarmRecipient != null) {
+                System.out.println("result not null");
+                return alarmRecipient;
+            }
+        }
+        return null;
     }
 
     protected Statement getSaveQuery(E dto) {

@@ -26,8 +26,10 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
@@ -35,18 +37,16 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.EntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.RELATIONS_CACHE;
 
@@ -65,6 +65,9 @@ public class BaseRelationService implements RelationService {
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    protected DeviceService deviceService;
 
     @Override
     public ListenableFuture<Boolean> checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
@@ -339,6 +342,56 @@ public class BaseRelationService implements RelationService {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<Map<String,List<Device>>> findCapitalistDevices (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup) {
+        List<EntityRelation> lessee = this.findByFromAndType(tenantId,from,relationType,typeGroup);
+        return lessee.stream().map(lessees -> {
+            Map<String,List<Device>> map = new HashMap<>();
+            if(lessees.getTo().getEntityType().toString().equals("CUSTOMER")) {
+                String lesseesId = lessees.getTo().getId().toString();
+                EntityId entityId = EntityIdFactory.getByTypeAndId("CUSTOMER", lessees.getTo().getId().toString());
+                List<Device> device = this.findLesseeDevices(tenantId, entityId, relationType, typeGroup);
+                map.put(lesseesId, device);
+            }
+            return map;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Map<String,List<Device>>> findManufacturerDevice (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup) {
+        List<EntityRelation> lessee = this.findByFromAndType(tenantId,from,relationType,typeGroup);
+        List<Device> maDevice = deviceService.findDevicesByTenantIdAndCustomerId(tenantId,  new CustomerId(from.getId()), createPageLink(1000, null, null, null)).getData();
+
+        return lessee.stream().map(lessees -> {
+            Map<String,List<Device>> map = new HashMap<>();
+            if(lessees.getTo().getEntityType().toString().equals("CUSTOMER")) {
+                List<Device> devices = new ArrayList<>();
+                String lesseesId = lessees.getTo().getId().toString();
+                EntityId entityId = EntityIdFactory.getByTypeAndId("CUSTOMER", lessees.getTo().getId().toString());
+                List<Device> device = this.findLesseeDevices(tenantId, entityId, relationType, typeGroup);
+                device.forEach(d -> {
+                    if (maDevice.contains(d)) {
+                        devices.add(d);
+                    }
+                });
+                map.put(lesseesId, devices);
+            }
+            return map;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Device>  findLesseeDevices (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup) {
+        List<EntityRelation> deviceId = this.findByFromAndType(tenantId,from,relationType,typeGroup);
+        return deviceId.stream().map(id -> {
+            if(id.getTo().getEntityType().toString().equals("DEVICE")){
+                return deviceService.findDeviceById(tenantId,new DeviceId(id.getTo().getId()));
+            }else {
+                return null;
+            }
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -618,5 +671,13 @@ public class BaseRelationService implements RelationService {
             relations = findByToAsync(tenantId, rootId, relationTypeGroup);
         }
         return relations;
+    }
+
+    private TextPageLink createPageLink(int limit, String textSearch, String idOffset, String textOffset) {
+        UUID idOffsetUuid = null;
+        if (org.apache.commons.lang3.StringUtils.isNotEmpty(idOffset)) {
+            idOffsetUuid = UUID.fromString(idOffset);
+        }
+        return new TextPageLink(limit, textSearch, idOffsetUuid, textOffset);
     }
 }

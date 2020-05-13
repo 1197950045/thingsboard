@@ -328,9 +328,6 @@ function KnobController($element, $scope, $document) {
         var textWidth = measureTextWidth(text, fontSize);
         while (textWidth > maxWidth) {
             fontSize--;
-            if (fontSize < 0) {
-                break;
-            }
             textWidth = measureTextWidth(text, fontSize);
         }
         element.css({'fontSize': fontSize+'px', 'lineHeight': fontSize+'px'});
@@ -338,7 +335,7 @@ function KnobController($element, $scope, $document) {
 
     function measureTextWidth(text, fontSize) {
         textMeasure.css({'fontSize': fontSize+'px', 'lineHeight': fontSize+'px'});
-        textMeasure.html(text);
+        textMeasure.text(text);
         return textMeasure.width();
     }
 

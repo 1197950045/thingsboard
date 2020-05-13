@@ -26,8 +26,6 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.List;
-
 /**
  * Created by ashvayka on 11.05.17.
  */
@@ -47,7 +45,6 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId {
     private long clearTs;
     private transient JsonNode details;
     private boolean propagate;
-    private List<String> propagateRelationTypes;
 
     public Alarm() {
         super();
@@ -71,7 +68,6 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId {
         this.clearTs = alarm.getClearTs();
         this.details = alarm.getDetails();
         this.propagate = alarm.isPropagate();
-        this.propagateRelationTypes = alarm.getPropagateRelationTypes();
     }
 
     @Override

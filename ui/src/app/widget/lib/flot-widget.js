@@ -139,7 +139,12 @@ export default class TbFlot {
                         return seriesHover.index === seriesIndex;
                     });
                     if (found && found.length) {
-                        let timestamp = parseInt(found[0].time);
+                        let timestamp;
+                        if (!angular.isNumber(hoverInfo[0].time) || (found[0].time < hoverInfo[0].time)) {
+                            timestamp = parseInt(hoverInfo[1].time);
+                        } else {
+                            timestamp = parseInt(hoverInfo[0].time);
+                        }
                         let date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
                         let dateDiv = $('<div>' + date + '</div>');
                         dateDiv.css({
@@ -1208,35 +1213,7 @@ export default class TbFlot {
     }
 
     static get pieDatakeySettingsSchema() {
-        return {
-            "schema": {
-                "type": "object",
-                "title": "DataKeySettings",
-                "properties": {
-                    "hideDataByDefault": {
-                        "title": "Data is hidden by default",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "disableDataHiding": {
-                        "title": "Disable data hiding",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "removeFromLegend": {
-                        "title": "Remove datakey from legend",
-                        "type": "boolean",
-                        "default": false
-                    }
-                },
-                "required": []
-            },
-            "form": [
-                "hideDataByDefault",
-                "disableDataHiding",
-                "removeFromLegend"
-            ]
-        };
+        return {}
     }
 
     static datakeySettingsSchema(defaultShowLines, chartType) {
@@ -1248,21 +1225,6 @@ export default class TbFlot {
                 "properties": {
                     "excludeFromStacking": {
                         "title": "Exclude from stacking(available in \"Stacking\" mode)",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "hideDataByDefault": {
-                        "title": "Data is hidden by default",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "disableDataHiding": {
-                        "title": "Disable data hiding",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "removeFromLegend": {
-                        "title": "Remove datakey from legend",
                         "type": "boolean",
                         "default": false
                     },
@@ -1354,9 +1316,6 @@ export default class TbFlot {
                 "required": ["showLines", "fillLines", "showPoints"]
             },
             "form": [
-                "hideDataByDefault",
-                "disableDataHiding",
-                "removeFromLegend",
                 "excludeFromStacking",
                 "showLines",
                 "fillLines",
@@ -1828,8 +1787,7 @@ export default class TbFlot {
             var entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
             var entityId = entityInfo ? entityInfo.entityId : null;
             var entityName = entityInfo ? entityInfo.entityName : null;
-            var entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
-            this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
+            this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item);
         }
     }
 }

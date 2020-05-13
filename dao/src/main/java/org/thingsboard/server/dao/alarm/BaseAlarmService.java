@@ -23,18 +23,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
-import org.thingsboard.server.common.data.alarm.AlarmQuery;
-import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.*;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -43,25 +37,30 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.util.HttpClientUtil;
 
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import java.text.SimpleDateFormat;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import static org.thingsboard.server.common.data.alarm.AlarmSeverity.CRITICAL;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -70,6 +69,21 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 public class BaseAlarmService extends AbstractEntityService implements AlarmService {
 
     public static final String ALARM_RELATION_PREFIX = "ALARM_";
+
+    //发件人邮箱
+    private static String myEmailAccount = "alarm@jshlszjswwgc.onexmail.com";
+    //密码
+    private static String myEmailPassword = "Zuw5x2DHqHwyRk9K";
+    // 发件人邮箱的 SMTP 服务器地址
+    private static String myEmailSMTPHost = "smtp.qq.com";
+    // 收件人邮箱
+    private static String receiveMailAccount = "1197950045@qq.com";
+
+    @Autowired
+    private AlarmRecipientDao alarmRecipientDao;
+
+    @Autowired
+    private DeviceDao deviceDao;
 
     @Autowired
     private AlarmDao alarmDao;
@@ -82,9 +96,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     protected ExecutorService readResultsProcessingExecutor;
 
+    @Autowired
+    protected RelationService relationService;
+
     @PostConstruct
     public void startExecutor() {
-        readResultsProcessingExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("alarm-service"));
+        readResultsProcessingExecutor = Executors.newCachedThreadPool();
     }
 
     @PreDestroy
@@ -138,10 +155,29 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         }
     }
 
-    private Alarm createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
+
+
+    public Alarm createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         createAlarmRelations(saved);
+        Device device = deviceDao.findById(alarm.getTenantId(), alarm.getOriginator().getId());
+//        List<AlarmRecipient> alarmRecipients = alarmRecipientDao.findByTelephoneAndSeverity(alarm.getTenantId().getId(), alarm.getOriginator().getId(), device.getCustomerId().getId(), alarm.getSeverity().toString());
+        /*for (AlarmRecipient alarmRecipient : alarmRecipients) {
+            if (alarmRecipient.getStatus()==0){
+                //发送短信
+                sendNote(saved,device,alarmRecipient);
+            }else if (alarmRecipient.getStatus()==1){
+                //发送邮件
+                sendEmail(saved,device,alarmRecipient);
+            }else {
+                //发送短信
+                sendNote(saved,device,alarmRecipient);
+                //发送邮件
+                sendEmail(saved,device,alarmRecipient);
+            }
+        }*/
+
         return saved;
     }
 
@@ -157,14 +193,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private List<EntityId> getParentEntities(Alarm alarm) throws InterruptedException, ExecutionException {
         EntityRelationsQuery query = new EntityRelationsQuery();
-        RelationsSearchParameters parameters = new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE, false);
-        query.setParameters(parameters);
-        List<String> propagateRelationTypes = alarm.getPropagateRelationTypes();
-        Stream<EntityRelation> relations = relationService.findByQuery(alarm.getTenantId(), query).get().stream();
-        if (!CollectionUtils.isEmpty(propagateRelationTypes)) {
-            relations = relations.filter(entityRelation -> propagateRelationTypes.contains(entityRelation.getType()));
-        }
-        return relations.map(EntityRelation::getFrom).collect(Collectors.toList());
+        query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE, false));
+        return relationService.findByQuery(alarm.getTenantId(), query).get().stream().map(EntityRelation::getFrom).collect(Collectors.toList());
     }
 
     private ListenableFuture<Alarm> updateAlarm(Alarm update) {
@@ -299,6 +329,55 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
+    public List<TimePageData<AlarmInfo>> findCustomersAlarms(TenantId tenantId, EntityId entityId, TimePageLink pageLink, AlarmSearchStatus alarmSearchStatus, AlarmStatus alarmStatus, Boolean fetchOriginator, String role){
+        List<TimePageData<AlarmInfo>> alarmList = new ArrayList<>();
+        switch (role) {
+            case "manufacturer":
+                List<Map<String, List<Device>>> maDevices = relationService.findManufacturerDevice(tenantId, entityId, "Contains", parseRelationTypeGroup("COMMON", RelationTypeGroup.COMMON));
+                maDevices.forEach(m -> {
+                    for (String key : m.keySet()) {
+                        List<Device> devicesList = m.get(key);
+                        devicesList.forEach(d ->{
+                            try {
+                                alarmList.add(this.findAlarms(tenantId, new AlarmQuery( EntityIdFactory.getByTypeAndId("DEVICE", d.getId().toString()), pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+                            } catch (InterruptedException | ExecutionException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+                });
+                break;
+            case "capitalist":
+                List<Map<String, List<Device>>> caDevices = relationService.findCapitalistDevices(tenantId, entityId, "Contains", parseRelationTypeGroup("COMMON", RelationTypeGroup.COMMON));
+                caDevices.forEach(c -> {
+                    for (String key : c.keySet()) {
+                        List<Device> devicesList = c.get(key);
+                        devicesList.forEach(d ->{
+                            try {
+                                alarmList.add(this.findAlarms(tenantId, new AlarmQuery( EntityIdFactory.getByTypeAndId("DEVICE", d.getId().toString()), pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+                            } catch (InterruptedException | ExecutionException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+                });
+                break;
+            default:
+                List<Device> leDevices = relationService.findLesseeDevices(tenantId, entityId, "Contains", parseRelationTypeGroup("COMMON", RelationTypeGroup.COMMON));
+                leDevices.forEach(l -> {
+                    try {
+                        alarmList.add(this.findAlarms(tenantId, new AlarmQuery( EntityIdFactory.getByTypeAndId("DEVICE", l.getId().toString()), pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+                    } catch (InterruptedException | ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                });
+                break;
+        }
+
+        return alarmList;
+    }
+
+    @Override
     public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                                   AlarmStatus alarmStatus) {
         TimePageLink nextPageLink = new TimePageLink(100);
@@ -369,30 +448,13 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         existing.setSeverity(alarm.getSeverity());
         existing.setDetails(alarm.getDetails());
         existing.setPropagate(existing.isPropagate() || alarm.isPropagate());
-        List<String> existingPropagateRelationTypes = existing.getPropagateRelationTypes();
-        List<String> newRelationTypes = alarm.getPropagateRelationTypes();
-        if (!CollectionUtils.isEmpty(newRelationTypes)) {
-            if (!CollectionUtils.isEmpty(existingPropagateRelationTypes)) {
-                existing.setPropagateRelationTypes(Stream.concat(existingPropagateRelationTypes.stream(), newRelationTypes.stream())
-                        .distinct()
-                        .collect(Collectors.toList()));
-            } else {
-                existing.setPropagateRelationTypes(newRelationTypes);
-            }
-        }
         return existing;
     }
 
     private void updateRelations(Alarm alarm, AlarmStatus oldStatus, AlarmStatus newStatus) {
         try {
             List<EntityRelation> relations = relationService.findByToAsync(alarm.getTenantId(), alarm.getId(), RelationTypeGroup.ALARM).get();
-
-            List<String> propagateRelationTypes = alarm.getPropagateRelationTypes();
-            Stream<EntityRelation> relationStream = relations.stream();
-            if (!CollectionUtils.isEmpty(propagateRelationTypes)) {
-                relationStream = relationStream.filter(entityRelation -> propagateRelationTypes.contains(entityRelation.getType()));
-            }
-            Set<EntityId> parents = relationStream.map(EntityRelation::getFrom).collect(Collectors.toSet());
+            Set<EntityId> parents = relations.stream().map(EntityRelation::getFrom).collect(Collectors.toSet());
             for (EntityId parentId : parents) {
                 updateAlarmRelation(alarm.getTenantId(), parentId, alarm.getId(), oldStatus, newStatus);
             }
@@ -426,6 +488,127 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         validateId(alarmId, "Alarm id should be specified!");
         ListenableFuture<Alarm> entity = alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId());
         return Futures.transform(entity, function, readResultsProcessingExecutor);
+    }
+
+    private RelationTypeGroup parseRelationTypeGroup(String strRelationTypeGroup, RelationTypeGroup defaultValue) {
+        RelationTypeGroup result = defaultValue;
+        if (strRelationTypeGroup != null && strRelationTypeGroup.trim().length() > 0) {
+            try {
+                result = RelationTypeGroup.valueOf(strRelationTypeGroup);
+            } catch (IllegalArgumentException e) {
+            }
+        }
+        return result;
+    }
+
+    //发送短信
+    public void sendNote(Alarm alarm,Device device,AlarmRecipient alarmRecipient){
+        //进行短信发送
+        //设置日期格式
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        //查询customerId(未用)
+        //UUID customerId = deviceDao.findByCustomerId(alarm.getTenantId().getId(), alarm.getOriginator().getId());
+        //查询设备
+        //Device device = deviceDao.findById(alarm.getTenantId(), alarm.getOriginator().getId());
+        try {
+            //查询告警接受者(多个)
+            //List<AlarmRecipient> alarmRecipients = alarmRecipientDao.findByTelephoneAndSeverity(alarm.getTenantId().getId(), alarm.getOriginator().getId(), device.getCustomerId().getId(), alarm.getSeverity().toString());
+            //信息替换(英文换成中文)
+            /*String param ="";
+            if (alarmRecipient.getSeverity().equals("CRITICAL")){
+                param = device.getName()+","+df.format(alarm.getStartTs())+","+alarmRecipient.getType()+","+"危险";
+            }else if (alarmRecipient.getSeverity().equals("MAJOR")){
+                param = device.getName()+","+df.format(alarm.getStartTs())+","+alarmRecipient.getType()+","+"重要";
+            }else if (alarmRecipient.getSeverity().equals("MINOR")){
+                param = device.getName()+","+df.format(alarm.getStartTs())+","+alarmRecipient.getType()+","+"次要";
+            }else if (alarmRecipient.getSeverity().equals("WARNING")){
+                param = device.getName()+","+df.format(alarm.getStartTs())+","+alarmRecipient.getType()+","+"警告";
+            }else if (alarmRecipient.getSeverity().equals("INDETERMINATE")){
+                param = device.getName()+","+df.format(alarm.getStartTs())+","+alarmRecipient.getType()+","+"不确定";
+            }*/
+            String param =device.getName()+","+df.format(alarm.getStartTs())+","+alarmRecipient.getType()+","+transForm(alarmRecipient.getSeverity());
+            //获取手机号
+            String mobile = alarmRecipient.getTelephone();
+            String uid = "";
+            //使用工具类进行发送信息
+            HttpClientUtil httpClientUtil = new HttpClientUtil();
+            httpClientUtil.sendSms(param, mobile, uid);
+        }catch (Exception e){
+            System.out.println(e);
+        }
+    }
+
+    //英文转换为中文
+    public String transForm(String severity){
+        String chinese="";
+        if (severity.equals("CRITICAL")){
+            chinese ="危险";
+        }else if (severity.equals("MAJOR")){
+            chinese ="重要";
+        }else if (severity.equals("MINOR")){
+            chinese ="次要";
+        }else if (severity.equals("WARNING")){
+            chinese ="警告";
+        }else if (severity.equals("INDETERMINATE")){
+            chinese ="不确定";
+        }
+        return chinese;
+    }
+
+    //发送邮件
+    public void sendEmail(Alarm alarm,Device device,AlarmRecipient alarmRecipient){
+        //创建参数配置, 用于连接邮件服务器的参数配置
+        Properties props = new Properties();                    // 参数配置
+        props.setProperty("mail.transport.protocol", "smtp");   // 使用的协议（JavaMail规范要求）
+        props.setProperty("mail.smtp.host", myEmailSMTPHost);   // 发件人的邮箱的 SMTP 服务器地址
+        props.setProperty("mail.smtp.auth", "true");
+
+        //根据配置创建会话对象, 用于和邮件服务器交互
+        Session session = Session.getInstance(props);
+        session.setDebug(true);                                 // 设置为debug模式, 可以查看详细的发送 log
+
+        try {
+            System.out.println("alarmRecipient="+alarmRecipient);
+            System.out.println("name="+alarmRecipient.getName());
+            String transForm = transForm(alarmRecipient.getSeverity());
+            //设置日期格式
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            //创建一封邮件
+            MimeMessage message = new MimeMessage(session);
+            // From: 发件人
+            message.setFrom(new InternetAddress(myEmailAccount, "尤云", "UTF-8"));
+            //To: 收件人
+            message.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(alarmRecipient.getEmail(), "告警接收人", "UTF-8"));
+            //Subject: 邮件主题
+            message.setSubject(device.getName()+"触发告警", "UTF-8");
+            //Content: 邮件正文
+            message.setContent("尊敬的"+alarmRecipient.getName()+"用户您好,您的设备"+device.getName()+" 于 "+df.format(alarm.getStartTs())+" 触发 "+alarmRecipient.getType()+" 告警,告警的级别为 "+transForm+" ,请及时处理。", "text/html;charset=UTF-8");
+            //设置发件时间
+            message.setSentDate(new Date());
+            //保存设置
+            message.saveChanges();
+            //发送短信
+            createMimeMessage(session,message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //发送邮件
+    public static void createMimeMessage(Session session,MimeMessage message){
+
+        try {
+            //根据 Session 获取邮件传输对象
+            Transport transport = session.getTransport();
+            //使用 邮箱账号 和 密码 连接邮件服务器, 这里认证的邮箱必须与 message 中的发件人邮箱一致, 否则报错
+            transport.connect(myEmailAccount, myEmailPassword);
+            //发送邮件, 发到所有的收件地址, message.getAllRecipients() 获取到的是在创建邮件对象时添加的所有收件人, 抄送人, 密送人
+            transport.sendMessage(message, message.getAllRecipients());
+            //关闭连接
+            transport.close();
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
     }
 
     private DataValidator<Alarm> alarmDataValidator =

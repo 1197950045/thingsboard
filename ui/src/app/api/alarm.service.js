@@ -47,7 +47,6 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         saveAlarm: saveAlarm,
         ackAlarm: ackAlarm,
         clearAlarm: clearAlarm,
-        deleteAlarm: deleteAlarm,
         getAlarms: getAlarms,
         getHighestAlarmSeverity: getHighestAlarmSeverity,
         pollAlarms: pollAlarms,
@@ -133,21 +132,6 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         return deferred.promise;
     }
 
-    function deleteAlarm(alarmId, ignoreErrors, config) {
-        var deferred = $q.defer();
-        var url = '/api/alarm/' + alarmId;
-        if (!config) {
-            config = {};
-        }
-        config = Object.assign(config, { ignoreErrors: ignoreErrors });
-        $http.delete(url, config).then(function success(response) {
-            deferred.resolve(response.data);
-        }, function fail() {
-            deferred.reject();
-        });
-        return deferred.promise;
-    }
-
     function getAlarms(entityType, entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator, ascOrder, config) {
         var deferred = $q.defer();
         var url = '/api/alarm/' + entityType + '/' + entityId + '?limit=' + pageLink.limit;
@@ -199,7 +183,7 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         return deferred.promise;
     }
 
-    function fetchAlarms(alarmsQuery, pageLink, deferred, leftToLoad, alarmsList) {
+    function fetchAlarms(alarmsQuery, pageLink, deferred, alarmsList) {
         getAlarms(alarmsQuery.entityType, alarmsQuery.entityId,
             pageLink, alarmsQuery.alarmSearchStatus, alarmsQuery.alarmStatus,
             alarmsQuery.fetchOriginator, false, {ignoreLoading: true}).then(
@@ -208,19 +192,8 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
                     alarmsList = [];
                 }
                 alarmsList = alarmsList.concat(alarms.data);
-                if (angular.isDefined(leftToLoad)) {
-                    leftToLoad -= pageLink.limit;
-                    if (leftToLoad === 0) {
-                        alarmsList = $filter('orderBy')(alarmsList, ['-createdTime']);
-                        deferred.resolve(alarmsList);
-                        return;
-                    }
-                    if (leftToLoad < pageLink.limit) {
-                        alarms.nextPageLink.limit = leftToLoad;
-                    }
-                }
                 if (alarms.hasNext && !alarmsQuery.limit) {
-                    fetchAlarms(alarmsQuery, alarms.nextPageLink, deferred, leftToLoad, alarmsList);
+                    fetchAlarms(alarmsQuery, alarms.nextPageLink, deferred, alarmsList);
                 } else {
                     alarmsList = $filter('orderBy')(alarmsList, ['-createdTime']);
                     deferred.resolve(alarmsList);
@@ -236,34 +209,26 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         var deferred = $q.defer();
         var time = Date.now();
         var pageLink;
-        var leftToLoad;
         if (alarmsQuery.limit) {
             pageLink = {
                 limit: alarmsQuery.limit
             };
         } else if (alarmsQuery.interval) {
             pageLink = {
-                limit: alarmsQuery.alarmsFetchSize || 100,
+                limit: 100,
                 startTime: time - alarmsQuery.interval
             };
         } else if (alarmsQuery.startTime) {
             pageLink = {
-                limit: alarmsQuery.alarmsFetchSize || 100,
+                limit: 100,
                 startTime: Math.round(alarmsQuery.startTime)
-            };
+            }
             if (alarmsQuery.endTime) {
                 pageLink.endTime = Math.round(alarmsQuery.endTime);
             }
         }
 
-        if (angular.isDefined(alarmsQuery.alarmsMaxCountLoad) && alarmsQuery.alarmsMaxCountLoad !== 0) {
-            leftToLoad = alarmsQuery.alarmsMaxCountLoad;
-            if (leftToLoad < pageLink.limit) {
-                pageLink.limit = leftToLoad;
-            }
-        }
-
-        fetchAlarms(alarmsQuery, pageLink, deferred, leftToLoad);
+        fetchAlarms(alarmsQuery, pageLink, deferred);
         return deferred.promise;
     }
 
@@ -311,10 +276,8 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
                 entityType: alarmSource.entityType,
                 entityId: alarmSource.entityId,
                 alarmSearchStatus: alarmSourceListener.alarmSearchStatus,
-                alarmStatus: null,
-                alarmsMaxCountLoad: alarmSourceListener.alarmsMaxCountLoad,
-                alarmsFetchSize: alarmSourceListener.alarmsFetchSize
-            };
+                alarmStatus: null
+            }
             var originatorKeys = $filter('filter')(alarmSource.dataKeys, {name: 'originator'});
             if (originatorKeys && originatorKeys.length) {
                 alarmSourceListener.alarmsQuery.fetchOriginator = true;

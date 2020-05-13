@@ -124,7 +124,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 var alarmDataKeys = [];
                 for (var d in ngModelCtrl.$viewValue.dataKeys) {
                     var dataKey = ngModelCtrl.$viewValue.dataKeys[d];
-                    if ((dataKey.type === types.dataKeyType.timeseries) || (dataKey.type === types.dataKeyType.attribute) || (dataKey.type === types.dataKeyType.entityField)) {
+                    if ((dataKey.type === types.dataKeyType.timeseries) || (dataKey.type === types.dataKeyType.attribute)) {
                         dataKeys.push(dataKey);
                     } else if (dataKey.type === types.dataKeyType.alarm) {
                         alarmDataKeys.push(dataKey);
@@ -219,7 +219,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                     w.triggerHandler('resize');
                 }
             }).then(function (newDataKey) {
-                if ((newDataKey.type === types.dataKeyType.timeseries) || (newDataKey.type === types.dataKeyType.attribute) || (newDataKey.type === types.dataKeyType.entityField)) {
+                if ((newDataKey.type === types.dataKeyType.timeseries) || (newDataKey.type === types.dataKeyType.attribute)) {
                     let index = scope.dataKeys.indexOf(dataKey);
                     scope.dataKeys[index] = newDataKey;
                 } else if (newDataKey.type === types.dataKeyType.alarm) {
@@ -246,16 +246,10 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                                 items.push({ name: dataKeys[i], type: types.dataKeyType.timeseries });
                             }
                             if (scope.widgetType == types.widgetType.latest.value) {
-                                var keysType = [types.dataKeyType.attribute, types.dataKeyType.entityField];
-                                var promises = [];
-                                keysType.forEach((type) => {
-                                    promises.push(scope.fetchEntityKeys({entityAliasId: scope.entityAlias.id, query: searchText, type: type}));
-                                });
-                                $q.all(promises).then(function (dataKeys) {
+                                scope.fetchEntityKeys({entityAliasId: scope.entityAlias.id, query: searchText, type: types.dataKeyType.attribute})
+                                    .then(function (dataKeys) {
                                         for (var i = 0; i < dataKeys.length; i++) {
-                                            for (var j = 0; j < dataKeys[i].length; j++) {
-                                                items.push({name: dataKeys[i][j], type: keysType[i]});
-                                            }
+                                            items.push({ name: dataKeys[i], type: types.dataKeyType.attribute });
                                         }
                                         deferred.resolve(items);
                                     }, function (e) {

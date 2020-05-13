@@ -231,9 +231,25 @@ public class ModelConstants {
     public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";
     public static final String ALARM_CLEAR_TS_PROPERTY = "clear_ts";
     public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
-    public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
 
     public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
+
+    /**
+     * Cassandra alarm_recipient constants.(告警接收者)
+     */
+    public static final String ALARM_RECIPIENT_COLUMN_FAMILY_NAME = "alarm_recipient";
+    public static final String ALARM_RECIPIENT_ID_PROPERTY=ID_PROPERTY;
+    public static final String ALARM_RECIPIENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ALARM_RECIPIENT_DEVICE_ID_PROPERTY = DEVICE_ID_PROPERTY;
+    public static final String ALARM_RECIPIENT_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String ALARM_RECIPIENT_NAME_PROPERTY = "name";
+    public static final String ALARM_RECIPIENT_TELEPHONE_PROPERTY = "telephone";
+    public static final String ALARM_RECIPIENT_TYPE_PROPERTY = "type";
+    public static final String ALARM_RECIPIENT_SEVERITY_PROPERTY = "severity";
+    public static final String ALARM_RECIPIENT_STATUS_PROPERTY = "status";
+    public static final String ALARM_RECIPIENT_EMAIL_PROPERTY = "email";
+
+    public static final String ALARM_RECIPIENT_BY_TYPE_VIEW_NAME = "alarm_by_severity";
 
     /**
      * Cassandra entity relation constants.

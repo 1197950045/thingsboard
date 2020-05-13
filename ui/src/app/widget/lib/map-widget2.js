@@ -291,8 +291,7 @@ export default class TbMapWidgetV2 {
 			entityId.id = datasource.entityId;
 			entityId.entityType = datasource.entityType;
 			var entityName = datasource.entityName;
-			var entityLabel = datasource.entityLabel;
-			this.ctx.actionsApi.handleWidgetAction(event, descriptor, entityId, entityName, null, entityLabel);
+			this.ctx.actionsApi.handleWidgetAction(event, descriptor, entityId, entityName);
 		}
 	}
 
@@ -561,8 +560,7 @@ export default class TbMapWidgetV2 {
 				entityId.id = datasource.entityId;
 				entityId.entityType = datasource.entityType;
 				var entityName = datasource.entityName;
-				var entityLabel = datasource.entityLabel;
-				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
+				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
 			}
 		}
 		function locationPolygonClick($event, location) {
@@ -573,8 +571,7 @@ export default class TbMapWidgetV2 {
 				entityId.id = datasource.entityId;
 				entityId.entityType = datasource.entityType;
 				var entityName = datasource.entityName;
-				var entityLabel = datasource.entityLabel;
-				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
+				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
 			}
 		}
 

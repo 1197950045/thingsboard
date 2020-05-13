@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -56,6 +57,12 @@ public interface RelationService {
     List<EntityRelation> findByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
 
     ListenableFuture<List<EntityRelation>> findByFromAsync(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
+
+    List findCapitalistDevices (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
+
+    List findManufacturerDevice (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
+
+    List<Device>  findLesseeDevices (TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<List<EntityRelationInfo>> findInfoByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
 

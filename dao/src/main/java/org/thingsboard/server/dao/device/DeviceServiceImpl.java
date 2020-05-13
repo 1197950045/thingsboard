@@ -121,17 +121,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
     @Override
-    public Device saveDeviceWithAccessToken(Device device, String accessToken) {
-        return doSaveDevice(device, accessToken);
-    }
-
-    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
-    @Override
     public Device saveDevice(Device device) {
-        return doSaveDevice(device, null);
-    }
-
-    private Device doSaveDevice(Device device, String accessToken) {
         log.trace("Executing saveDevice [{}]", device);
         deviceValidator.validate(device, Device::getTenantId);
         Device savedDevice;
@@ -153,7 +143,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             DeviceCredentials deviceCredentials = new DeviceCredentials();
             deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
             deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-            deviceCredentials.setCredentialsId(!StringUtils.isEmpty(accessToken) ? accessToken : RandomStringUtils.randomAlphanumeric(20));
+            deviceCredentials.setCredentialsId(RandomStringUtils.randomAlphanumeric(20));
             deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
         }
         return savedDevice;
