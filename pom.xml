@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>2.5.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -30,9 +30,10 @@
     <properties>
         <main.dir>${basedir}</main.dir>
         <pkg.user>thingsboard</pkg.user>
-        <spring-boot.version>2.2.4.RELEASE</spring-boot.version>
-        <spring.version>5.2.2.RELEASE</spring.version>
-        <spring-security.version>5.2.2.RELEASE</spring-security.version>
+        <spring-boot.version>2.2.6.RELEASE</spring-boot.version>
+        <spring-oauth2.version>2.1.2.RELEASE</spring-oauth2.version>
+        <spring.version>5.2.6.RELEASE</spring.version>
+        <spring-security.version>5.2.3.RELEASE</spring-security.version>
         <spring-data-redis.version>2.2.4.RELEASE</spring-data-redis.version>
         <jedis.version>3.1.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
@@ -42,8 +43,9 @@
         <logback.version>1.2.3</logback.version>
         <mockito.version>1.9.5</mockito.version>
         <rat.version>0.10</rat.version>
-        <cassandra.version>3.6.0</cassandra.version>
-        <cassandra-unit.version>3.5.0.1</cassandra-unit.version>
+        <cassandra.version>4.6.0</cassandra.version>
+        <metrics.version>4.0.5</metrics.version>
+        <cassandra-unit.version>4.3.1.0</cassandra-unit.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
         <guava.version>28.2-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
@@ -61,14 +63,14 @@
         <gson.version>2.6.2</gson.version>
         <velocity.version>1.7</velocity.version>
         <velocity-tools.version>2.0</velocity-tools.version>
-        <mail.version>1.4.3</mail.version>
+        <mail.version>1.6.2</mail.version>
         <curator.version>4.2.0</curator.version>
         <zookeeper.version>3.5.5</zookeeper.version>
         <protobuf.version>3.11.4</protobuf.version>
         <grpc.version>1.22.1</grpc.version>
         <lombok.version>1.16.18</lombok.version>
         <paho.client.version>1.1.0</paho.client.version>
-        <netty.version>4.1.45.Final</netty.version>
+        <netty.version>4.1.49.Final</netty.version>
         <os-maven-plugin.version>1.5.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
@@ -95,7 +97,7 @@
         <snakeyaml.version>1.25</snakeyaml.version>
         <struts.version>1.3.10</struts.version>
         <amazonaws.sqs.version>1.11.747</amazonaws.sqs.version>
-        <pubsub.client.version>1.84.0</pubsub.client.version>
+        <pubsub.client.version>1.105.0</pubsub.client.version>
         <azure-servicebus.version>3.2.0</azure-servicebus.version>
         <passay.version>1.5.0</passay.version>
         <ua-parser.version>1.4.3</ua-parser.version>
@@ -109,7 +111,7 @@
         <module>rule-engine</module>
         <module>dao</module>
         <module>transport</module>
-        <module>ui</module>
+        <module>ui-ngx</module>
         <module>tools</module>
         <module>application</module>
         <module>msa</module>
@@ -326,12 +328,16 @@
                             <exclude>**/*.proto.js</exclude>
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>
+                            <exclude>ui/**</exclude>
+                            <exclude>src/browserslist</exclude>
+                            <exclude>**/*.raw</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
                             <cql>DOUBLEDASHES_STYLE</cql>
                             <scss>JAVADOC_STYLE</scss>
                             <jsx>SLASHSTAR_STYLE</jsx>
+                            <tsx>SLASHSTAR_STYLE</tsx>
                             <conf>SCRIPT_STYLE</conf>
                             <gradle>JAVADOC_STYLE</gradle>
                         </mapping>
@@ -459,6 +465,33 @@
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-oauth2</artifactId>
+                <version>${spring-oauth2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-oauth2-client</artifactId>
+                <version>${spring-security.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-core</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-oauth2-jose</artifactId>
+                <version>${spring-security.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-core</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>
                 <version>${spring-boot.version}</version>
@@ -571,8 +604,8 @@
                 <version>${rabbitmq.version}</version>
             </dependency>
             <dependency>
-                <groupId>javax.mail</groupId>
-                <artifactId>mail</artifactId>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
                 <version>${mail.version}</version>
             </dependency>
             <dependency>
@@ -590,6 +623,12 @@
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
                 <version>${zookeeper.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
@@ -619,19 +658,19 @@
                 <version>${netty.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.datastax.cassandra</groupId>
-                <artifactId>cassandra-driver-core</artifactId>
+                <groupId>com.datastax.oss</groupId>
+                <artifactId>java-driver-core</artifactId>
                 <version>${cassandra.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.datastax.cassandra</groupId>
-                <artifactId>cassandra-driver-mapping</artifactId>
+                <groupId>com.datastax.oss</groupId>
+                <artifactId>java-driver-query-builder</artifactId>
                 <version>${cassandra.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.datastax.cassandra</groupId>
-                <artifactId>cassandra-driver-extras</artifactId>
-                <version>${cassandra.version}</version>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jmx</artifactId>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -672,6 +711,12 @@
                 <groupId>com.github.fge</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>${json-schema-validator.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>javax.mail</groupId>
+                        <artifactId>mailapi</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.typesafe.akka</groupId>
@@ -908,12 +953,6 @@
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-servicebus</artifactId>
                 <version>${azure-servicebus.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.microsoft.azure</groupId>
-                        <artifactId>adal4j</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>

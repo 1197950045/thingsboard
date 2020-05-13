@@ -18,6 +18,7 @@ package org.thingsboard.server.queue.azure.servicebus;
 import com.microsoft.azure.servicebus.management.ManagementClient;
 import com.microsoft.azure.servicebus.management.QueueDescription;
 import com.microsoft.azure.servicebus.primitives.ConnectionStringBuilder;
+import com.microsoft.azure.servicebus.primitives.MessagingEntityAlreadyExistsException;
 import com.microsoft.azure.servicebus.primitives.ServiceBusException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
@@ -66,12 +67,18 @@ public class TbServiceBusAdmin implements TbQueueAdmin {
 
         try {
             QueueDescription queueDescription = new QueueDescription(topic);
+            queueDescription.setRequiresDuplicateDetection(false);
             setQueueConfigs(queueDescription);
 
             client.createQueue(queueDescription);
             queues.add(topic);
         } catch (ServiceBusException | InterruptedException e) {
-            log.error("Failed to create queue: [{}]", topic, e);
+            if (e instanceof MessagingEntityAlreadyExistsException) {
+                queues.add(topic);
+                log.info("[{}] queue already exists.", topic);
+            } else {
+                log.error("Failed to create queue: [{}]", topic, e);
+            }
         }
     }
 
