@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.transport.adaptor;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -47,6 +49,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
 import java.text.ParseException;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -66,6 +69,12 @@ public class JsonConverter {
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
         convertToTelemetry(jsonElement, System.currentTimeMillis(), null, builder);
+        return builder.build();
+    }
+
+    public static PostTelemetryMsg convertToFyTelemetryProto(JSONObject jsonElement) throws JsonSyntaxException {
+        PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
+        convertToFyTelemetry(jsonElement, System.currentTimeMillis(), null, builder);
         return builder.build();
     }
 
@@ -89,6 +98,22 @@ public class JsonConverter {
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
         }
+    }
+
+    private static void convertToFyTelemetry(JSONObject jo, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+            long ts = simpleDateFormat.parse(jo.getString("time"), new ParsePosition(0)).getTime();
+            JSONArray ja = jo.getJSONArray("Data");
+            JsonObject values = new JsonObject();
+            for (int i = 0; i < ja.size(); i++) {
+                values.addProperty(((JSONObject)ja.get(i)).getString("name"),((JSONObject)ja.get(i)).getString("value"));
+            }
+            JsonObject data = new JsonObject();
+            data.addProperty("ts",ts);
+            data.add("values",values);
+            parseObject(systemTs, result, builder, data);
+
     }
 
 //   coap数据具体处理方法
@@ -228,7 +253,6 @@ public class JsonConverter {
 
     private  static String [] getPlcData(JsonObject jo)  {
         String strTs = jo.get("t").getAsString();
-        System.out.println("");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
         Date date = null;

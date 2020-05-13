@@ -94,10 +94,8 @@ public class newDayService implements SchedulingConfigurer {
     }
 
     //3.添加定时任务
-    @Scheduled(cron = "0 5 0 * * ?")
+    @Scheduled(cron = "0 5 0 * * ?",zone = "Asia/Shanghai")
     @Transactional
-    //或直接指定时间间隔，例如：5秒
-    //@Scheduled(fixedRate=5000)
     public void configureTasks() throws ExecutionException, InterruptedException {
         TextPageLink pageLink = createPageLink(1000, null, null,null );
         List<Tenant> tenant = tenantDao.findTenantsByRegion(new TenantId(EntityId.NULL_UUID), "Global", pageLink);
@@ -118,6 +116,7 @@ public class newDayService implements SchedulingConfigurer {
                         logAttributesUpdated(user, entityId, scope, attributes, null);
                         if (entityId.getEntityType() == EntityType.DEVICE) {
                             DeviceId deviceId = new DeviceId(entityId.getId());
+                            //走规则链
                             DeviceAttributesEventNotificationMsg notificationMsg = DeviceAttributesEventNotificationMsg.onUpdate(
                                     user.getTenantId(), deviceId, scope, attributes);
                             actorService.onMsg(new SendToClusterMsg(deviceId, notificationMsg));

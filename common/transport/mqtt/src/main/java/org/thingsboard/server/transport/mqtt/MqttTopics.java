@@ -32,6 +32,17 @@ public class MqttTopics {
     public static final String DEVICE_CLAIM_TOPIC = BASE_DEVICE_API_TOPIC + "/claim";
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";
 
+    public static final String DEVICE_FY_TELEMETRY_TOPIC =  "/system/MonitorData";
+    public static final String DEVICE_FY_WriteData_TOPIC =  "/system/WriteData";
+    public static final String DEVICE_FY_Pause_TOPIC =  "/system/Pause";
+    public static final String DEVICE_FY_Reboot_TOPIC =  "/system/Reboot";
+    public static final String DEVICE_FY_GetInfo_TOPIC =  "/system/GetInfo";
+    public static final String DEVICE_FY_MDataPubCycle_TOPIC =  "/system/MDataPubCycle";
+    public static final String DEVICE_FY_MDPCS_TOPIC =  "/system/MDPCS";
+    public static final String DEVICE_FY_MDataPubNow_TOPIC =  "/system/MDataPubNow";
+
+
+
     public static final String BASE_GATEWAY_API_TOPIC = "v1/gateway";
     public static final String GATEWAY_CONNECT_TOPIC = BASE_GATEWAY_API_TOPIC + "/connect";
     public static final String GATEWAY_DISCONNECT_TOPIC = BASE_GATEWAY_API_TOPIC + "/disconnect";

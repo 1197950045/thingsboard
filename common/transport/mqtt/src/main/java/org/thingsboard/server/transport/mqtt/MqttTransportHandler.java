@@ -232,6 +232,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_TOPIC)) {
                 TransportProtos.ClaimDeviceMsg claimDeviceMsg = adaptor.convertToClaimDevice(deviceSessionCtx, mqttMsg);
                 transportService.process(sessionInfo, claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
+            } else if (topicName.contains(MqttTopics.DEVICE_FY_TELEMETRY_TOPIC)) {
+                TransportProtos.PostTelemetryMsg postTelemetryMsg = adaptor.convertToFyPostTelemetry(deviceSessionCtx, mqttMsg);
+                transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
             }
         } catch (AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
