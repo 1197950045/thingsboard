@@ -52,6 +52,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCreden
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -114,6 +115,62 @@ public class DeviceApiController {
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)),
+                            new HttpOkCallback(responseWriter));
+                }));
+        return responseWriter;
+    }
+
+    /**
+     * ZHC4661模块互感器采集
+     * @param deviceToken
+     * @param data
+     * @return
+     */
+    @RequestMapping(value = "/telemetry/ZHC", method = RequestMethod.POST)
+    public DeferredResult<ResponseEntity> postZHC(@RequestParam(value = "DEVID") String deviceToken,@RequestParam(value = "data") String data) {
+
+        String json = "{";
+        for(int i = 0,j =0; i < 16; i+=4,j++){
+            json += "\"data"+j+"\":\"" + new BigInteger(data.substring(6+i,10+i), 16).toString() + "\"";
+            if(i != 12){
+                json += ",";
+            }
+        }
+        json += "}";
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
+        String finalJson = json;
+        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(finalJson)),
+                            new HttpOkCallback(responseWriter));
+                }));
+        return responseWriter;
+    }
+
+    /**
+     * ZHC4661模块互感器采集电流
+     * @param deviceToken
+     * @param data
+     * @return
+     */
+    @RequestMapping(value = "/telemetry/ZHC/electric", method = RequestMethod.POST)
+    public DeferredResult<ResponseEntity> postElectric(@RequestParam(value = "DEVID") String deviceToken,@RequestParam(value = "data") String data) {
+
+        String json = "{";
+        for(int i = 0,j =0; i < 12; i+=4,j++){
+            json += "\"current"+(j+1)+"\":\"" + new BigInteger(data.substring(6+i,10+i), 16).toString() + "\"";
+            if(i != 8){
+                json += ",";
+            }
+        }
+        json += "}";
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
+        String finalJson = json;
+        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(finalJson)),
                             new HttpOkCallback(responseWriter));
                 }));
         return responseWriter;
